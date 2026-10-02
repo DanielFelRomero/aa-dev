@@ -4,6 +4,7 @@ from html import escape
 from pathlib import Path
 
 import pandas as pd
+from deltalake import DeltaTable
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,7 +13,7 @@ REPORT_PATH = REPORT_DIR / "run_report.html"
 SOURCE = ROOT / "data/source/customers.csv"
 BRONZE = ROOT / "data/bronze/customers_delta"
 SILVER = ROOT / "data/silver/customers_delta"
-GOLD = ROOT / "data/gold/features.parquet"
+GOLD = ROOT / "data/gold/features_delta"
 MODEL = ROOT / "data/gold/model.joblib"
 
 
@@ -54,7 +55,7 @@ def main() -> None:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
     source_df = pd.read_csv(SOURCE) if SOURCE.exists() else pd.DataFrame()
-    gold_df = pd.read_parquet(GOLD) if GOLD.exists() else pd.DataFrame()
+    gold_df = DeltaTable(str(GOLD)).to_pandas() if GOLD.exists() else pd.DataFrame()
 
     null_rate = float(gold_df.isna().mean().mean()) if not gold_df.empty else 0.0
 
@@ -82,7 +83,7 @@ def main() -> None:
         ("Fuente", SOURCE.exists(), "CSV"),
         ("Bronze", BRONZE.exists(), "Delta Lake"),
         ("Silver", SILVER.exists(), "Delta Lake"),
-        ("Gold", GOLD.exists(), "Parquet"),
+        ("Gold", GOLD.exists(), "Delta Lake"),
         ("Modelo", MODEL.exists(), "Joblib"),
     ]
 
@@ -94,7 +95,7 @@ def main() -> None:
 
     drift_text = "No disponible"
     if drift_shift is not None:
-        drift_text = f"{drift_shift:.3f} " + ("(umbral superado)" if drift_flag else "(bajo umbral)")
+        drift_text = f"{drift_shift if drift_shift is not None else 0.0:.3f} " + ("(umbral superado)" if drift_flag else "(bajo umbral)")
 
     bars = "".join(
         bar(f"Clase {int(k)}", float(v), float(max_churn))
