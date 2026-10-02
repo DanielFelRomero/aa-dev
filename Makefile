@@ -11,7 +11,7 @@ run-all:
 	PYTHONPATH=src $(PYTHON) scripts/05_observe.py
 
 serve:
-	PYTHONPATH=src $(PYTHON) -m uvicorn scripts.04_serve:app --host 127.0.0.1 --port 8000
+	PYTHONPATH=src $(PYTHON) -m uvicorn scripts.api:app --host 127.0.0.1 --port 8000
 
 test:
 	PYTHONPATH=src pytest -q
