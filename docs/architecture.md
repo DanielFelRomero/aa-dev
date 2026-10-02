@@ -2,40 +2,29 @@
 
 ## Contexto
 
-La práctica implementa una arquitectura analítica local que permite observar conceptos normalmente presentes en arquitecturas de datos modernas.
+La práctica implementa una arquitectura Lakehouse local, basada en archivos y tablas Delta, para observar ingesta, transformación, almacenamiento y consumo analítico y de machine learning. No se construye un Data Warehouse independiente: Gold sirve directamente a consultas analíticas y al entrenamiento.
 
-La arquitectura se divide en ingestión, almacenamiento Bronze, transformación y calidad en Silver, dataset analítico Gold, entrenamiento de machine learning, serving y observabilidad.
+## Flujo lógico
+
+Fuente CSV → Bronze (Delta Lake) → Silver (Delta Lake) → Gold (Delta Lake) → consumo analítico (DuckDB) y entrenamiento (scikit-learn) → serving (FastAPI) → observabilidad.
+
+## Responsabilidades
+
+- **CSV:** formato de intercambio para datos sintéticos de origen.
+- **Delta Lake:** gestión de tablas transaccionales sobre archivos en Bronze, Silver y Gold.
+- **DuckDB:** motor SQL analítico local que consulta Gold sin crear un almacén dimensional independiente.
+- **Scikit-learn:** entrenamiento supervisado a partir de Gold.
+- **FastAPI:** exposición del modelo como servicio de inferencia.
+- **Reporte HTML:** visualización ligera de indicadores y resultados analíticos.
+- **Scripts:** automatización reproducible de las etapas.
 
 ## Principios
 
-### Separación de responsabilidades
-
-Cada componente mantiene una responsabilidad específica:
-
-- DuckDB: procesamiento analítico local.
-- Delta Lake: gestión de tablas sobre almacenamiento basado en archivos.
-- Parquet: formato columnar.
-- Scikit-learn: entrenamiento del modelo.
-- FastAPI: exposición del servicio de inferencia.
-- Scripts: automatización de la ejecución de cada etapa.
-
-### Reproducibilidad
-
-El entorno fija versiones de dependencias y utiliza una semilla de aleatoriedad conocida.
-
-### Calidad y gobierno
-
-La calidad se observa como un atributo transversal. La protección del identificador se realiza antes de la generación del dataset Gold.
+- **Separación de responsabilidades:** almacenamiento, procesamiento, entrenamiento, inferencia y observabilidad diferenciados.
+- **Reproducibilidad:** conjunto sintético de 1.000 registros y dependencias fijadas.
+- **Consumo analítico desde el Lakehouse:** agregaciones directas sobre Gold mediante DuckDB.
+- **Calidad y gobierno:** pseudonimización en Silver, sin sustituir autenticación, autorización ni controles de acceso.
 
 ## Alcance
 
-La arquitectura es deliberadamente local. No implementa:
-
-- almacenamiento de objetos gestionado;
-- catálogo de datos empresarial;
-- control de acceso de producción;
-- clúster distribuido;
-- Feature Store;
-- plataforma MLOps completa.
-
-Estos elementos pueden ser objeto de discusión arquitectónica.
+La arquitectura es local y educativa. No implementa almacenamiento de objetos gestionado, catálogo empresarial, control de acceso productivo, clúster distribuido, Feature Store completo ni plataforma MLOps integral. Estos elementos se analizan como alternativas, no como dependencias obligatorias.
