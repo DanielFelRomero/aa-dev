@@ -10,7 +10,7 @@ El objetivo principal no consiste en desarrollar una solución de producción. E
 
 ## Guía de ejecución
 
-La guía paso a paso se encuentra en [GUIA_PRACTICA.md](GUIA_PRACTICA.md). Se recomienda utilizarla como documento principal durante la sesión.
+La guía paso a paso se encuentra en [guia_practica.md](guia_practica.md). Se recomienda utilizarla como documento principal durante la sesión.
 
 ## Arquitectura de referencia
 

@@ -64,7 +64,7 @@ Revisar:
 - identificador técnico;
 - ausencia de datos personales reales.
 
-### Pregunta para discusión
+### Discusión
 
 ¿Por qué el CSV puede ser suficiente como formato de intercambio, pero no necesariamente como formato principal de almacenamiento analítico?
 
@@ -82,15 +82,17 @@ Después revisar:
 find data/bronze/customers_delta -maxdepth 2 -type f | sort
 ```
 
-### Qué debe observarse
+### Qué se observa?
 
 Debe aparecer una estructura de tabla Delta, incluyendo archivos de datos y metadatos de transacciones.
 
-La discusión debe separar tres conceptos:
+Se puede un beauty json online para revisarlo
 
-- formato de archivo;
-- tabla gestionada;
-- arquitectura Lakehouse.
+A tener en cuenta:
+
+- cuál es el formato de archivo;
+- cuál es la tabla gestionada;
+- es una arquitectura Lakehouse?.
 
 ## Paso 3. Analizar DuckDB
 
@@ -100,13 +102,9 @@ Ejecutar:
 python -c "import duckdb; c=duckdb.connect(); c.execute('INSTALL delta'); c.execute('LOAD delta'); print(c.execute(\"SELECT COUNT(*) FROM delta_scan('data/bronze/customers_delta')\").fetchone()); c.close()"
 ```
 
-### Pregunta de trade-off
+### Trade-off
 
 ¿Qué se gana utilizando DuckDB para este escenario local y qué se perdería frente a un motor distribuido?
-
-### Tiempo sugerido
-
-35–40 minutos.
 
 ---
 
@@ -138,7 +136,7 @@ Y realizar una consulta rápida:
 python -c "from deltalake import DeltaTable; print(DeltaTable('data/silver/customers_delta').to_pandas().head())"
 ```
 
-### Qué debe observarse
+### Qué se observa
 
 El identificador original `customer_id` ya no forma parte de la tabla Silver. En su lugar aparece `customer_key`. Se espera conservar los 1.000 registros.
 
@@ -146,12 +144,12 @@ El identificador original `customer_id` ya no forma parte de la tabla Silver. En
 
 La transformación utiliza SHA-256 con un salt fijo para producir una clave determinística.
 
-La discusión debe establecer que:
+Qué puntos tener en cuenta:
 
-- la técnica corresponde a pseudonimización, no a anonimización completa;
-- no reemplaza autenticación ni autorización;
-- no constituye por sí sola control de acceso a columnas;
-- existe un trade-off entre utilidad analítica y exposición del identificador.
+- la técnica corresponde a pseudonimización, no a anonimización completa. Por qué?;
+- no reemplaza autenticación ni autorización. Cómo tendría que implementarlas?;
+- no constituye por sí sola control de acceso a columnas. Cómo se implementaría?;
+- existe un trade-off entre utilidad analítica y exposición del identificador, cuál?.
 
 ## Paso 3. Revisar Gold
 
@@ -161,7 +159,7 @@ Ejecutar:
 python -c "from deltalake import DeltaTable; df=DeltaTable('data/gold/features_delta').to_pandas(); print(df.head()); print(df.columns.tolist())"
 ```
 
-### Pregunta de análisis
+### Análisis
 
 ¿Por qué esta tabla puede considerarse una capa de características para ML, pero no un Feature Store completo?
 
@@ -174,10 +172,6 @@ Observar:
 - propagación del cambio;
 - reproducibilidad;
 - necesidad de volver a generar capas derivadas.
-
-### Tiempo sugerido
-
-40–45 minutos.
 
 ---
 
@@ -195,7 +189,7 @@ Ejecutar:
 PYTHONPATH=src python scripts/03_train.py
 ```
 
-Registrar mentalmente:
+Revisar:
 
 - métrica mostrada;
 - partición train/test;
@@ -203,7 +197,7 @@ Registrar mentalmente:
 - preprocesamiento;
 - persistencia del artefacto.
 
-### Pregunta de análisis
+### Análisis
 
 ¿Qué responsabilidades corresponden al entrenamiento y cuáles al serving?
 
@@ -216,6 +210,22 @@ ls -lh data/gold/model.joblib
 ```
 
 El archivo representa el artefacto utilizado posteriormente por el servicio.
+
+Ejecutar:
+
+```bash
+python -c "import joblib; m = joblib.load('data/gold/model.joblib'); print(type(m)); print(m); print(m.named_steps if hasattr(m, 'named_steps') else 'No es un Pipeline')"
+```
+
+Esto mostrará el tipo de objeto almacenado, su estructura y los componentes del Pipeline.
+
+Ejecutar:
+
+```bash
+python -c "import joblib; m = joblib.load('data/gold/model.joblib'); s = m.named_steps['scaler']; c = m.named_steps['classifier']; print('Medias:', s.mean_); print('Escalas:', s.scale_); print('Coeficientes:', c.coef_); print('Intercepto:', c.intercept_); print('Clases:', c.classes_)"
+```
+
+Esto mostrará los datos almacenados de estructura y componentes del modelo.
 
 ## Paso 3. Iniciar FastAPI
 
@@ -261,13 +271,9 @@ http://127.0.0.1:8000/docs
 
 Esta vista permite ejecutar `/health` y `/predict` sin utilizar `curl`.
 
-### Discusión de trade-off
+### Trade-off
 
 ¿Qué ventajas aporta un servicio separado frente a ejecutar directamente el modelo desde el mismo proceso de transformación?
-
-### Tiempo sugerido
-
-35–40 minutos.
 
 ---
 
@@ -296,7 +302,7 @@ Revisar:
 
 La detección de drift no debe interpretarse automáticamente como degradación del modelo.
 
-### Preguntas para discusión
+### Discusión
 
 - ¿Qué está observando realmente el indicador?
 - ¿Qué evidencia adicional sería necesaria para afirmar degradación predictiva?
@@ -304,9 +310,21 @@ La detección de drift no debe interpretarse automáticamente como degradación 
 
 ## Paso 3. Consumo analítico del Lakehouse
 
-Ejecutar `PYTHONPATH=src python scripts/07_analytics.py`. El script consulta Gold directamente mediante DuckDB y genera `reports/analytics.html`, con agregaciones por región y antigüedad y visualizaciones de barras. Para visualizarlo en Codespaces, ejecutar `python -m http.server 8081 --directory reports` y abrir el puerto 8081 desde **Ports**. Gold sirve directamente al consumo analítico y a ML; no se materializa un Data Warehouse separado.
+Ejecutar:
 
-Preguntas: ¿Qué consultas resuelve Gold? ¿Qué ventajas y costes tendría un modelo dimensional o una capa semántica? ¿Qué límites tiene interpretar datos sintéticos?
+```bash
+PYTHONPATH=src python scripts/07_analytics.py
+```
+
+El script consulta Gold directamente mediante DuckDB y genera `reports/analytics.html`, con agregaciones por región y antigüedad y visualizaciones de barras. Para visualizarlo en Codespaces, ejecutar:
+
+```bash
+python -m http.server 8081 --directory reports
+```
+
+Abrir el puerto 8081 desde **Ports**. Gold sirve directamente al consumo analítico y a ML; no se materializa un Data Warehouse separado.
+
+Pregunta: ¿Qué consultas resuelve Gold? ¿Qué ventajas y costes tendría un modelo dimensional o una capa semántica? ¿Qué límites tiene interpretar datos sintéticos?
 
 ## Paso 4. Cierre arquitectónico
 
@@ -327,7 +345,7 @@ Utilizar los ADR de referencia en `docs/adr/` para estructurar el diálogo: cont
 - serving integrado vs desacoplado;
 - indicador de drift vs métricas de desempeño.
 
-La discusión debe centrarse en:
+Tener en cuenta en los ADR:
 
 1. contexto;
 2. restricción;
@@ -337,10 +355,6 @@ La discusión debe centrarse en:
 6. consecuencia arquitectónica.
 
 El ADR organiza el análisis colectivo; no se requiere crear ni entregar un documento.
-
-### Tiempo sugerido
-
-35–40 minutos.
 
 ---
 
@@ -367,7 +381,7 @@ curl -X POST http://127.0.0.1:8000/predict \
 PYTHONPATH=src python scripts/05_observe.py
 ```
 
-# ¿Qué se debe mirar durante la práctica?
+# Análisis de arquitectura
 
 El objetivo no es únicamente comprobar que los comandos terminan sin error. En cada etapa debe observarse el estado arquitectónico resultante.
 
@@ -404,7 +418,7 @@ Después puede iniciarse nuevamente el servicio:
 make serve
 ```
 
-# Criterio pedagógico
+# Criterio
 
 La práctica debe ejecutarse como una experiencia de arquitectura:
 
