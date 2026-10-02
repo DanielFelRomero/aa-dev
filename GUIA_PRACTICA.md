@@ -46,7 +46,7 @@ En caso de utilizar un entorno local fuera de Codespaces, se requiere Python 3.1
 
 ## Objetivo
 
-Observar la transición desde el dato fuente hasta una capa Bronze gestionada como tabla Delta y consultable mediante DuckDB.
+Observar la transición desde los 1.000 registros sintéticos del origen hasta Bronze como tabla Delta y realizar consultas SQL analíticas sobre el Lakehouse.
 
 ## Paso 1. Inspección del origen
 
@@ -140,7 +140,7 @@ python -c "from deltalake import DeltaTable; print(DeltaTable('data/silver/custo
 
 ### Qué debe observarse
 
-El identificador original `customer_id` ya no forma parte de la tabla Silver. En su lugar aparece `customer_key`.
+El identificador original `customer_id` ya no forma parte de la tabla Silver. En su lugar aparece `customer_key`. Se espera conservar los 1.000 registros.
 
 ### Discusión
 
@@ -158,7 +158,7 @@ La discusión debe establecer que:
 Ejecutar:
 
 ```bash
-python -c "import pandas as pd; df=pd.read_parquet('data/gold/features.parquet'); print(df.head()); print(df.columns.tolist())"
+python -c "from deltalake import DeltaTable; df=DeltaTable('data/gold/features_delta').to_pandas(); print(df.head()); print(df.columns.tolist())"
 ```
 
 ### Pregunta de análisis
@@ -302,7 +302,13 @@ La detección de drift no debe interpretarse automáticamente como degradación 
 - ¿Qué evidencia adicional sería necesaria para afirmar degradación predictiva?
 - ¿Qué diferencia existe entre data quality monitoring, service monitoring y model monitoring?
 
-## Paso 3. Cierre arquitectónico
+## Paso 3. Consumo analítico del Lakehouse
+
+Ejecutar `PYTHONPATH=src python scripts/07_analytics.py`. El script consulta Gold directamente mediante DuckDB y genera `reports/analytics.html`, con agregaciones por región y antigüedad y visualizaciones de barras. Para visualizarlo en Codespaces, ejecutar `python -m http.server 8081 --directory reports` y abrir el puerto 8081 desde **Ports**. Gold sirve directamente al consumo analítico y a ML; no se materializa un Data Warehouse separado.
+
+Preguntas: ¿Qué consultas resuelve Gold? ¿Qué ventajas y costes tendría un modelo dimensional o una capa semántica? ¿Qué límites tiene interpretar datos sintéticos?
+
+## Paso 4. Cierre arquitectónico
 
 Revisar:
 
@@ -311,7 +317,7 @@ docs/architecture.md
 docs/tradeoffs.md
 ```
 
-Seleccionar una de las decisiones discutidas:
+Utilizar los ADR de referencia en `docs/adr/` para estructurar el diálogo: contexto, problema, alternativas, decisión, justificación, consecuencias y atributos de calidad. Seleccionar una de las decisiones discutidas:
 
 - CSV vs Parquet;
 - Parquet vs Delta Lake;
@@ -330,7 +336,7 @@ La discusión debe centrarse en:
 5. trade-off;
 6. consecuencia arquitectónica.
 
-No se requiere crear un documento ni registrar formalmente la respuesta.
+El ADR organiza el análisis colectivo; no se requiere crear ni entregar un documento.
 
 ### Tiempo sugerido
 
