@@ -1,0 +1,22 @@
+project:
+  name: aa-dev
+  seed: 42
+
+paths:
+  source: data/source/customers.csv
+  bronze: data/bronze/customers_delta
+  silver: data/silver/customers_delta
+  gold: data/gold/features.parquet
+  model: data/gold/model.joblib
+
+model:
+  target: churn
+  test_size: 0.2
+  random_state: 42
+
+service:
+  host: 127.0.0.1
+  port: 8000
+
+monitoring:
+  drift_threshold: 0.20
