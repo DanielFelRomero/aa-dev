@@ -9,9 +9,13 @@ run-all:
 	PYTHONPATH=src $(PYTHON) scripts/02_transform.py
 	PYTHONPATH=src $(PYTHON) scripts/03_train.py
 	PYTHONPATH=src $(PYTHON) scripts/05_observe.py
+	PYTHONPATH=src $(PYTHON) scripts/06_report.py
 
 serve:
 	PYTHONPATH=src $(PYTHON) -m uvicorn scripts.api:app --host 127.0.0.1 --port 8000
+
+report:
+	PYTHONPATH=src $(PYTHON) scripts/06_report.py
 
 test:
 	PYTHONPATH=src pytest -q
