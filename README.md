@@ -14,7 +14,9 @@ La guía paso a paso se encuentra en [GUIA_PRACTICA.md](GUIA_PRACTICA.md). Se re
 
 ## Arquitectura de referencia
 
-Fuente CSV → Bronze → Silver → Gold → entrenamiento → serving → observabilidad.
+Fuente CSV → Bronze (Delta Lake) → Silver (Delta Lake) → Gold (Delta Lake) → consumo analítico con DuckDB y entrenamiento → serving → observabilidad.
+
+Gold se consulta directamente como parte del Lakehouse. No se incorpora un Data Warehouse independiente.
 
 La práctica utiliza componentes locales para representar conceptos arquitectónicos sin afirmar que el entorno constituye una plataforma Lakehouse productiva.
 
@@ -22,11 +24,11 @@ La práctica utiliza componentes locales para representar conceptos arquitectón
 
 ### 1. Ingesta y almacenamiento
 
-Se construye una capa Bronze utilizando Delta Lake sobre almacenamiento basado en archivos y se consulta con DuckDB.
+Se ingesta un conjunto sintético de 1.000 registros a Bronze como tabla Delta Lake.
 
 ### 2. Transformación, calidad y gobierno
 
-Se construye Silver con transformación y pseudonimización determinística. Posteriormente se genera un dataset Gold orientado a ML.
+Se construye Silver con transformación y pseudonimización determinística. Gold se conserva como tabla Delta para consumo analítico y ML.
 
 ### 3. Entrenamiento y serving
 
@@ -34,7 +36,7 @@ Se entrena un modelo supervisado con Scikit-learn, se persiste el artefacto y se
 
 ### 4. Observabilidad y trade-offs
 
-Se observan indicadores de calidad y data drift y se discuten decisiones arquitectónicas.
+Se ejecutan consultas agregadas sobre Gold, se revisan visualizaciones HTML e indicadores de calidad y drift, y se analizan decisiones con el formato ADR.
 
 ## Filosofía de trabajo
 
@@ -75,4 +77,4 @@ La práctica ofrece dos mecanismos visuales de bajo costo:
 1. La estructura de archivos permite observar la evolución de las capas Bronze, Silver y Gold.
 2. FastAPI ofrece una interfaz web interactiva para explorar el contrato y ejecutar las operaciones del servicio.
 
-No se incorpora un dashboard adicional porque introduciría una nueva capa tecnológica que no aporta al objetivo central de la práctica.
+Las consultas analíticas se ejecutan con DuckDB directamente sobre Gold; `scripts/07_analytics.py` genera visualizaciones HTML sin añadir un Data Warehouse ni un servidor BI. El análisis de trade-offs utiliza ADR como formato de discusión, sin entregables formales.
