@@ -17,6 +17,9 @@ serve:
 report:
 	PYTHONPATH=src $(PYTHON) scripts/06_report.py
 
+report-serve: report
+	$(PYTHON) -m http.server 8080 --directory reports
+
 test:
 	PYTHONPATH=src pytest -q
 
