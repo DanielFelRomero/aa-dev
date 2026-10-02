@@ -21,7 +21,7 @@ report-serve: report
 	$(PYTHON) -m http.server 8080 --directory reports
 
 test:
-	PYTHONPATH=src pytest -q
+	PYTHONPATH=src $(PYTHON) -m pytest -q
 
 clean:
 	rm -rf data/bronze data/silver data/gold
