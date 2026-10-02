@@ -405,3 +405,41 @@ La práctica debe ejecutarse como una experiencia de arquitectura:
 **ejecutar → observar → interpretar → discutir → relacionar con una decisión arquitectónica**.
 
 El código está preconstruido para reducir carga de implementación y desplazar la actividad hacia la comprensión de componentes, responsabilidades, atributos de calidad, restricciones y trade-offs.
+
+
+## Reporte visual opcional
+
+Después de ejecutar las etapas 1–4, puede generarse un reporte HTML local:
+
+```bash
+make report
+```
+
+El archivo se genera en:
+
+```
+reports/run_report.html
+```
+
+El reporte presenta visualmente:
+
+- estado de las capas Fuente, Bronze, Silver y Gold;
+- existencia del artefacto del modelo;
+- cantidad de registros;
+- tasa de valores faltantes;
+- indicador de cambio de distribución;
+- distribución de la variable objetivo;
+- muestras de los datos fuente y Gold;
+- recorrido lógico de la arquitectura.
+
+No se agrega una herramienta de BI o un dashboard como dependencia. El reporte se genera con Python y HTML/CSS para mantener bajo el costo operacional y evitar ampliar el alcance de la práctica.
+
+En Codespaces, el archivo puede abrirse desde el explorador del repositorio mediante la vista previa del editor. También puede publicarse temporalmente con:
+
+```bash
+python -m http.server 8080 --directory reports
+```
+
+El puerto 8080 puede abrirse mediante la opción de puertos del Codespace.
+
+La visualización es opcional. La guía principal continúa siendo la secuencia de ejecución y análisis.
