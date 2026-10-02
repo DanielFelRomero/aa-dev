@@ -6,7 +6,7 @@ paths:
   source: data/source/customers.csv
   bronze: data/bronze/customers_delta
   silver: data/silver/customers_delta
-  gold: data/gold/features.parquet
+  gold: data/gold/features_delta
   model: data/gold/model.joblib
 
 model:
